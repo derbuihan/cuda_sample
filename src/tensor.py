@@ -1,7 +1,7 @@
 import numpy as np
 from numba import cuda
 
-from .kernels import add_kernel, matmul_kernel
+from .kernels import add_kernel, matmul_kernel, relu_kernel
 
 THREADS_PER_BLOCK = 256
 
@@ -82,6 +82,12 @@ class Tensor:
 
         requires_grad = self.requires_grad or other.requires_grad
         return Tensor.from_device_array(out, requires_grad=requires_grad)
+
+    def relu(self):
+        out_tensor = self._unary_op(relu_kernel)
+        out_tensor._prev = {self}
+        out_tensor._op = "relu"
+        return out_tensor
 
     def __add__(self, other):
         out_tensor = self._binary_op(other, add_kernel)

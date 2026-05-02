@@ -1,3 +1,4 @@
+import numpy as np
 from numba import cuda
 
 
@@ -26,3 +27,11 @@ def matmul_kernel(a, b, out):
         for k in range(a.shape[1]):
             s += a[row, k] * b[k, col]
         out[row, col] = s
+
+
+@cuda.jit
+def relu_kernel(a, out):
+    i = cuda.grid(1)
+
+    if i < a.size:
+        out.flat[i] = max(a.flat[i], np.float32(0.0))

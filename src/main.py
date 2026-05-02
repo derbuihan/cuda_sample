@@ -2,10 +2,10 @@ from .tensor import Tensor
 
 
 def main():
-    x = Tensor([[1, 2]])
+    x = Tensor([[1, -2], [-1, 2]])
     y = Tensor([[10, 11], [12, 13]])
-    z = Tensor([[1], [2]])
-    w = x @ y @ z
+    z = x @ y
+    w = z.relu()
 
     print(x)
     print(x.numpy())
