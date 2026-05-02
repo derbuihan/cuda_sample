@@ -28,19 +28,19 @@ class Tensor:
 
     @classmethod
     def from_device_array(
-        cls, data, requires_grad=True, _prev=set(), _backward=lambda: None, _op=""
+        cls, data, requires_grad=True, _prev=None, _backward=lambda: None, _op=""
     ):
         obj = cls.__new__(cls)
         obj.data = data
         obj.requires_grad = requires_grad
-        obj.shape = data.shape
+        obj.shape = tuple(data.shape)
         obj.dtype = data.dtype
         obj.grad = None
 
         if requires_grad:
             obj.zero_grad()
 
-        obj._prev = _prev
+        obj._prev = set() if _prev is None else _prev
         obj._backward = _backward
         obj._op = _op
 
