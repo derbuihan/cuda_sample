@@ -2,19 +2,12 @@ from .tensor import Tensor
 
 
 def main():
-    x = Tensor([[1, -2], [-1, 2]])
-    y = Tensor([[10, 11], [12, 13]])
-    z = x @ y
-    w = z.relu()
-
-    print(x)
-    print(x.numpy())
-    print(y)
-    print(y.numpy())
-    print(z)
-    print(z.numpy())
-    print(w)
-    print(w.numpy())
+    x = Tensor([[5.0, 6.0]])
+    y = Tensor([[2.0, 1.0]])
+    z = x + y
+    z.backward()
+    print(x.grad.numpy())
+    print(y.grad.numpy())
 
 
 if __name__ == "__main__":
