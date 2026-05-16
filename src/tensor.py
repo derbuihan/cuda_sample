@@ -1,7 +1,13 @@
 import numpy as np
 from numba import cuda
 
-from .kernels import add_inplace_kernel, add_kernel, matmul_kernel, relu_kernel
+from .kernels import (
+    add_inplace_kernel,
+    add_kernel,
+    matmul_kernel,
+    relu_backward_kernel,
+    relu_kernel,
+)
 
 THREADS_PER_BLOCK = 256
 
@@ -33,6 +39,13 @@ def add_backward(t1, t2, out):
     if t2.requires_grad:
         add_inplace_kernel[blocks_for(t2.data.size), THREADS_PER_BLOCK](
             t2.grad.data, out.grad.data
+        )
+
+
+def relu_backward(tensor, out):
+    if tensor.requires_grad:
+        relu_backward_kernel[blocks_for(tensor.data.size), THREADS_PER_BLOCK](
+            tensor.data, out.grad.data, tensor.grad.data
         )
 
 
@@ -123,6 +136,7 @@ class Tensor:
         out_tensor = self._unary_op(relu_kernel)
         out_tensor._prev = [self]
         out_tensor._op = "relu"
+        out_tensor._backward = lambda: relu_backward(self, out_tensor)
         return out_tensor
 
     def __add__(self, other):

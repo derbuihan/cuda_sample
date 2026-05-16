@@ -2,10 +2,12 @@ from .tensor import Tensor
 
 
 def main():
-    x = Tensor([[5.0, 6.0]])
-    y = Tensor([[2.0, 1.0]])
+    x = Tensor([[-1.0, 5.0, 6.0]])
+    y = Tensor([[2.0, 1.0, -3]])
     z = x + y
-    z.backward()
+    # z.backward()
+    x.relu().backward()
+    y.relu().backward()
     print(x.grad.numpy())
     print(y.grad.numpy())
 

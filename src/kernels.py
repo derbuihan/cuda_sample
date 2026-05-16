@@ -35,3 +35,12 @@ def relu_kernel(a, out):
 
     if i < a.size:
         out.flat[i] = max(a.flat[i], np.float32(0.0))
+
+
+@cuda.jit
+def relu_backward_kernel(a, out_grad, a_grad):
+    i = cuda.grid(1)
+
+    if i < a.size:
+        if a.flat[i] > 0:
+            a_grad.flat[i] += out_grad.flat[i]
