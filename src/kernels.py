@@ -30,6 +30,28 @@ def matmul_kernel(a, b, out):
 
 
 @cuda.jit
+def matmul_backward_a_kernel(a_grad, b, out_grad):
+    row, col = cuda.grid(2)
+
+    if row < a_grad.shape[0] and col < a_grad.shape[1]:
+        s = 0
+        for k in range(b.shape[1]):
+            s += out_grad[row, k] * b[col, k]
+        a_grad[row, col] += s
+
+
+@cuda.jit
+def matmul_backward_b_kernel(a, b_grad, out_grad):
+    row, col = cuda.grid(2)
+
+    if row < b_grad.shape[0] and col < b_grad.shape[1]:
+        s = 0
+        for k in range(a.shape[0]):
+            s += a[k, row] * out_grad[k, col]
+        b_grad[row, col] += s
+
+
+@cuda.jit
 def relu_kernel(a, out):
     i = cuda.grid(1)
 

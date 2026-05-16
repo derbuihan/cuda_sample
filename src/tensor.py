@@ -4,6 +4,8 @@ from numba import cuda
 from .kernels import (
     add_inplace_kernel,
     add_kernel,
+    matmul_backward_a_kernel,
+    matmul_backward_b_kernel,
     matmul_kernel,
     relu_backward_kernel,
     relu_kernel,
@@ -46,6 +48,25 @@ def relu_backward(tensor, out):
     if tensor.requires_grad:
         relu_backward_kernel[blocks_for(tensor.data.size), THREADS_PER_BLOCK](
             tensor.data, out.grad.data, tensor.grad.data
+        )
+
+
+def matmul_backward(t1, t2, out):
+    threads_per_blocks = (16, 16)
+    shape_0 = max(out.shape[0], t1.shape[0], t2.shape[0])
+    shape_1 = max(out.shape[1], t1.shape[1], t2.shape[1])
+    blocks = (
+        (shape_0 + threads_per_blocks[0] - 1) // threads_per_blocks[0],
+        (shape_1 + threads_per_blocks[1] - 1) // threads_per_blocks[1],
+    )
+    if t1.requires_grad:
+        matmul_backward_a_kernel[blocks, threads_per_blocks](
+            t1.grad.data, t2.data, out.grad.data
+        )
+
+    if t2.requires_grad:
+        matmul_backward_b_kernel[blocks, threads_per_blocks](
+            t1.data, t2.grad.data, out.grad.data
         )
 
 
@@ -146,7 +167,7 @@ class Tensor:
         out_tensor._backward = lambda: add_backward(self, other, out_tensor)
         return out_tensor
 
-    def __matmul__(self, other):
+    def _binary_op_matmul(self, other):
         if not isinstance(other, Tensor):
             raise TypeError("other must be a Tensor")
 
@@ -166,3 +187,11 @@ class Tensor:
 
         requires_grad = self.requires_grad or other.requires_grad
         return Tensor.from_device_array(out, requires_grad=requires_grad)
+
+    def __matmul__(self, other):
+        out_tensor = self._binary_op_matmul(other)
+        out_tensor._prev = [self, other]
+        out_tensor._op = "@"
+
+        out_tensor._backward = lambda: matmul_backward(self, other, out_tensor)
+        return out_tensor
